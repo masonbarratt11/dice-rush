@@ -292,7 +292,7 @@ bot.on('callback_query', async (query) => {
       }
       
       bot.sendMessage(chatId,
-        `💳 Deposit $${amount}\n\n<a href="http://localhost:3000/stripe-checkout.html?userId=${userId}&amount=${amount}&chatId=${chatId}">Complete Payment</a>`,
+        `💳 Deposit $${amount}\n\n<a href="https://dice-rush-production.up.railway.app/stripe-checkout.html?userId=${userId}&amount=${amount}&chatId=${chatId}">Complete Payment</a>`,
         { parse_mode: 'HTML' }
       );
     }
@@ -308,7 +308,7 @@ bot.on('callback_query', async (query) => {
       }
       
       bot.sendMessage(chatId,
-        `🅿️ Deposit $${amount}\n\n<a href="http://localhost:3000/paypal-checkout.html?userId=${userId}&amount=${amount}&chatId=${chatId}">Complete Payment</a>`,
+        `🅿️ Deposit $${amount}\n\n<a href="https://dice-rush-production.up.railway.app/paypal-checkout.html?userId=${userId}&amount=${amount}&chatId=${chatId}">Complete Payment</a>`,
         { parse_mode: 'HTML' }
       );
     }
