@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICE RUSH - Deposit</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .amount-display {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .amount-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="email"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #card-element {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+        }
+
+        .stripe-container {
+            margin-bottom: 20px;
+        }
+
+        #card-errors {
+            color: #fa755a;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success {
+            display: none;
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            display: none;
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .method {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .method.active {
+            border-color: #667eea;
+            background: #f0f5ff;
+        }
+
+        .method:hover {
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #f0f5ff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 DICE RUSH</h1>
+            <p class="subtitle">Secure Deposit</p>
+        </header>
+
+        <div id="success" class="success">
+            ✅ Payment successful! Your balance has been updated.
+        </div>
+
+        <div id="error" class="error"></div>
+
+        <div class="amount-display">
+            <p>Deposit Amount</p>
+            <div class="amount-value">$<span id="amount-display">10</span></div>
+        </div>
+
+        <div class="info-box">
+            💡 Your deposit will be instantly credited to your DICE RUSH account. Start playing immediately!
+        </div>
+
+        <form id="payment-form">
+            <div class="payment-methods">
+                <div class="method active" data-method="stripe">
+                    💳 Card
+                </div>
+                <div class="method" data-method="paypal">
+                    🅿️ PayPal
+                </div>
+            </div>
+
+            <div id="stripe-form" class="payment-form-section">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required placeholder="John Doe">
+                </div>
+
+                <div class="form-group stripe-container">
+                    <label>Card Details</label>
+                    <div id="card-element"></div>
+                    <div id="card-errors" role="alert"></div>
+                </div>
+
+                <button type="submit">
+                    💳 Pay $<span id="submit-amount">10</span>
+                </button>
+            </div>
+
+            <div id="paypal-form" class="payment-form-section" style="display: none;">
+                <div class="form-group">
+                    <label for="paypal-email">PayPal Email</label>
+                    <input type="email" id="paypal-email" placeholder="your@paypal.com">
+                </div>
+
+                <button type="button" onclick="initiatePayPal()">
+                    🅿️ Pay with PayPal
+                </button>
+            </div>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing payment...</p>
+        </div>
+
+        <div class="divider">
+            <small>🔒 Payments are secure and encrypted</small>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get('userId');
+        const amount = params.get('amount') || 10;
+
+        // Update display
+        document.getElementById('amount-display').textContent = amount;
+        document.getElementById('submit-amount').textContent = amount;
+
+        // Initialize Stripe
+        const stripe = Stripe('pk_test_YOUR_PUBLISHABLE_KEY'); // Get from your Stripe dashboard
+        const elements = stripe.elements();
+        const cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+
+        // Handle card errors
+        cardElement.addEventListener('change', (event) => {
+            const displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        // Payment method switching
+        document.querySelectorAll('.method').forEach(method => {
+            method.addEventListener('click', () => {
+                const selectedMethod = method.dataset.method;
+                
+                // Update UI
+                document.querySelectorAll('.method').forEach(m => m.classList.remove('active'));
+                method.classList.add('active');
+
+                // Switch forms
+                document.getElementById('stripe-form').style.display = 
+                    selectedMethod === 'stripe' ? 'block' : 'none';
+                document.getElementById('paypal-form').style.display = 
+                    selectedMethod === 'paypal' ? 'block' : 'none';
+            });
+        });
+
+        // Handle Stripe form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            const button = e.target.querySelector('button[type="submit"]');
+
+            // Show loading
+            loading.style.display = 'block';
+            button.disabled = true;
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                // Create payment intent
+                const response = await fetch('/create-payment-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Payment failed');
+                }
+
+                // Confirm payment with Stripe
+                const result = await stripe.confirmCardPayment(data.clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: document.getElementById('name').value,
+                            email: document.getElementById('email').value
+                        }
+                    }
+                });
+
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+
+                // Confirm payment on backend
+                const confirmResponse = await fetch('/confirm-stripe-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentIntentId: result.paymentIntent.id,
+                        userId: userId,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                const confirmData = await confirmResponse.json();
+
+                if (!confirmResponse.ok) {
+                    throw new Error(confirmData.error || 'Payment confirmation failed');
+                }
+
+                // Success!
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    // Redirect back to Telegram bot
+                    window.location.href = `tg://user?id=${userId}`;
+                }, 2000);
+
+            } catch (error) {
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // PayPal payment
+        async function initiatePayPal() {
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/create-paypal-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'PayPal setup failed');
+                }
+
+                // Redirect to PayPal approval
+                window.location.href = data.approveLink;
+
+            } catch (error) {
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Check if user ID is present
+        if (!userId) {
+            document.getElementById('error').textContent = '❌ No user ID provided';
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
