@@ -29,6 +29,7 @@ const client = new paypalSdk.core.PayPalHttpClient(environment);
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const app = express();
 app.use(express.json());
+app.use(express.static('.')); // Serve static HTML files
 
 console.log('✅ DICE RUSH Payment Bot initialized');
 console.log('✅ Stripe connected');
