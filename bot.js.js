@@ -140,6 +140,47 @@ app.post('/confirm-stripe-payment', async (req, res) => {
   }
 });
 
+app.post('/confirm-paypal-payment', async (req, res) => {
+  try {
+    const { orderId, userId, amount, chatId } = req.body;
+    
+    if (!orderId || !userId || !amount) {
+      return res.status(400).json({ error: 'Invalid order data' });
+    }
+    
+    // Verify order with PayPal
+    const request = new paypalSdk.orders.OrdersGetRequest(orderId);
+    const order = await client.execute(request);
+    
+    if (order.result.status === 'COMPLETED') {
+      const wallet = updateBalance(userId, amount, 'deposit');
+      
+      // Notify user
+      try {
+        await bot.sendMessage(
+          userId,
+          `✅ <b>PayPal Deposit Successful!</b>\n💰 +$${amount}\n🏦 New: $${wallet.balance.toFixed(2)}`,
+          { parse_mode: 'HTML' }
+        );
+      } catch (err) {}
+      
+      // Post to group
+      if (chatId) {
+        try {
+          await bot.sendMessage(chatId, `💰 User ${userId} deposited $${amount} via PayPal!`, { parse_mode: 'HTML' });
+        } catch (err) {}
+      }
+      
+      res.json({ success: true, balance: wallet.balance });
+    } else {
+      res.status(400).json({ error: 'Order not completed' });
+    }
+  } catch (error) {
+    console.error('❌ PayPal error:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // ==================== TELEGRAM COMMANDS ====================
 
 bot.onText(/\/start/, (msg) => {

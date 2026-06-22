@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PayPal Checkout - DICE RUSH</title>
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+      font-size: 24px;
+    }
+    #paypal-button-container {
+      margin-top: 20px;
+    }
+    .info {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🅿️ PayPal Checkout</h1>
+    <div class="info">
+      <p id="amount-display"></p>
+      <p>Click the button below to complete your deposit.</p>
+    </div>
+    <div id="paypal-button-container"></div>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const amount = urlParams.get('amount');
+    const chatId = urlParams.get('chatId');
+
+    // Display amount
+    document.getElementById('amount-display').textContent = `Deposit Amount: $${amount}`;
+
+    // PayPal initialization
+    paypal.Buttons({
+      createOrder: (data, actions) => {
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              value: amount
+            }
+          }]
+        });
+      },
+      onApprove: async (data, actions) => {
+        const order = await actions.order.capture();
+        
+        // Send confirmation to bot
+        try {
+          const response = await fetch('/confirm-paypal-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              userId: userId,
+              amount: amount,
+              chatId: chatId
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            alert(`✅ Deposit successful!\nNew balance: $${result.balance}`);
+            window.location.href = `tg://resolve?domain=dice_rush_bot`;
+          } else {
+            alert('❌ Deposit failed: ' + result.error);
+          }
+        } catch (error) {
+          alert('❌ Error: ' + error.message);
+        }
+      },
+      onError: (err) => {
+        alert('❌ Payment error: ' + err);
+      }
+    }).render('#paypal-button-container');
+  </script>
+</body>
+</html>
