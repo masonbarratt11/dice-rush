@@ -19,7 +19,7 @@ if (!TELEGRAM_TOKEN || !PAYPAL_CLIENT_ID || !PAYPAL_SECRET) {
 }
 
 // PayPal Environment
-const environment = new paypalSdk.core.SandboxEnvironment(
+const environment = new paypalSdk.core.LiveEnvironment(
   PAYPAL_CLIENT_ID,
   PAYPAL_SECRET
 );
